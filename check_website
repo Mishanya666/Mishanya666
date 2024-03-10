@@ -1,0 +1,33 @@
+#!/bin/bash
+
+# Функция для проверки доступности сайта и вывода дополнительной информации
+check_website() {
+    local website="$1"
+    
+    # Получаем IP-адрес сайта
+    ip=$(dig +short "$website" | head -n 1)
+    
+    # Получаем информацию о SSL-сертификате
+    ssl_info=$(openssl s_client -servername "$website" -connect "$website":443 </dev/null 2>/dev/null | openssl x509 -text | grep "Subject:")
+
+    # Проверяем доступность сайта
+    response=$(curl -Is "$website" | head -n 1)
+    if [[ "$response" == *"200 OK"* ]]; then
+        echo "Website is reachable."
+        echo "IP Address: $ip"
+        echo "SSL Certificate Info:"
+        echo "$ssl_info"
+    else
+        echo "Website is down or unreachable."
+    fi
+}
+
+# Проверка аргументов командной строки
+if [ $# -ne 1 ]; then
+    echo "Usage: $0 <website>"
+    exit 1
+fi
+
+# Получение аргумента командной строки (адреса сайта) и проверка доступности
+website="$1"
+check_website "$website"
